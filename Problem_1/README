@@ -1,1 +1,115 @@
 
+ # Problem 1: Parse fixed width file
+
+  Detailed Explanation of the Code
+
+---
+
+  1. `load_spec(spec_file)`
+This function is responsible for loading and parsing the configuration details from a JSON specification file. This file contains all the metadata needed to process the fixed-width and CSV files.
+
+ # Key Steps:
+1. Open the JSON file:
+   - The function uses the `open()` function to read the file in text mode with the specified encoding (`utf-8`).
+   
+2. Load the JSON data:
+   - The `json.load()` function parses the JSON file into a Python dictionary.
+   
+3. Extract key parameters:
+   - `ColumnNames`: The list of column headers to be used in the CSV file.
+   - `Offsets`: A list of strings representing the width (in characters) of each column in the fixed-width format. These are converted to integers using `map(int, spec['Offsets'])`.
+   - Encodings:
+     - `FixedWidthEncoding`: Encoding for the fixed-width file.
+     - `DelimitedEncoding`: Encoding for the delimited (CSV) file.
+   - Header Inclusion:
+     - `IncludeHeader`: A string that specifies whether the output files should include a header row. This is converted to a boolean.
+
+ # Return Value:
+The function returns a dictionary containing all the extracted information, making it accessible to the other parts of the program.
+
+---
+
+  2. `generate_fixed_width_input_file(spec, output_file)`
+This function creates a fixed-width formatted text file (`input_fixed_width.txt`) based on the specification and a predefined dataset.
+
+ # Key Steps:
+
+1. Extract parameters from the specification:
+   - The function retrieves column names, offsets, and encoding details from the `spec` dictionary.
+
+2. Define example data:
+   - A list of lists (`example_data`) represents rows of sample data, each corresponding to the specified columns.
+
+3. Format rows into fixed-width format:
+   - Row Formatting:
+     - A helper function, `format_fixed_width(row, offsets)`, processes each row of data.
+     - Each value in the row is padded or truncated to match the corresponding width specified in the `offsets`.
+     - Padding: Uses `ljust(width)` to pad the string to the right.
+     - Truncating: Uses slicing (`[:width]`) to ensure the value does not exceed the specified width.
+
+4. Write to the output file:
+   - The function writes the formatted data to the output file (`input_fixed_width.txt`).
+   - If `IncludeHeader` is `True`, the column names are written as the first row.
+
+---
+
+  3. `parse_fixed_width_to_csv(spec, input_file, output_file)`
+This function reads a fixed-width formatted file and converts it into a delimited CSV file (`output.csv`).
+
+ # Key Steps:
+
+1. Calculate field positions:
+   - The function computes the start and end positions of each field based on the `offsets`.
+   - Example: If offsets are `[20, 5, 10]`, the positions will be `[(0, 20), (20, 25), (25, 35)]`.
+
+2. Open files:
+   - Opens the fixed-width input file (`input_file`) for reading using the `FixedWidthEncoding`.
+   - Opens the CSV output file (`output_file`) for writing using the `DelimitedEncoding`.
+
+3. Write header row (if needed):
+   - Writes the column names from the specification to the CSV file, but only if `IncludeHeader` is `True`.
+
+4. Parse each line:
+   - For each line in the fixed-width file:
+     - Extracts values using the precomputed start and end positions.
+     - Strips any extra spaces using `.strip()`.
+
+5. Write to CSV:
+   - Writes the parsed fields to the CSV file as a row.
+
+---
+
+  4. Helper Functions
+
+ # `format_fixed_width(row, offsets)`
+This helper function ensures each row adheres to the fixed-width format. It processes:
+1. Padding Values: Ensures values are left-aligned using `ljust(width)`.
+2. Truncating Excess: Ensures values do not exceed their allocated width using slicing (`[:width]`).
+
+---
+
+  Main Execution
+
+ # 1. Load the Specification
+The `load_spec()` function reads `specs.json` and extracts the structure for the fixed-width file. 
+
+ # 2. Generate the Fixed-Width File
+The `generate_fixed_width_input_file()` function creates a file (`input_fixed_width.txt`) fixed-width dataset based on example data.
+
+ # 3. Parse Fixed-Width to CSV
+The `parse_fixed_width_to_csv()` function processes the fixed-width file and creates a structured CSV (`output.csv`).
+
+---
+
+
+  Execution Summary
+
+1. Input: `specs.json` provides the metadata for file handling.
+2. Output Files:
+   - `input_fixed_width.txt`: A fixed-width text file with example data.
+   - `output.csv`: A delimited CSV file with the parsed data.
+
+---
+
+
+
