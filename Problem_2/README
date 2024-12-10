@@ -1,1 +1,121 @@
+ Detailed Explanation of the Code
 
+ 1. Data Generation
+
+# Libraries Used
+- `Faker`: Generates realistic fake data for testing purposes.
+- `csv`: Writes the data to a CSV file.
+
+# Key Steps
+1. File Parameters:
+   - `output_file`: Name of the generated CSV file.
+   - `num_rows`: Number of rows to generate (1,000,000 rows in this case).
+
+2. Column Names:
+   - `columns`: Defines the fields for the dataset, including `first_name`, `last_name`, `address`, and `date_of_birth`.
+
+3. Data Generation:
+   - A loop generates each row with random data:
+     - `first_name` and `last_name`: Random names.
+     - `address`: Random address, with line breaks replaced by commas.
+     - `date_of_birth`: Random date of birth for individuals aged 18 to 80.
+
+4. Write to File:
+   - Writes the header row followed by generated data rows into `sample_data.csv`.
+
+---
+
+ 2. Anonymization
+
+# Purpose
+To mask sensitive data (e.g., names, addresses) using a hashing algorithm. Two approaches are implemented:
+
+---
+
+# Local Processing:
+
+1. `anonymize(value, salt)` Function:
+   - Uses SHA-256 to hash the input value concatenated with a salt (`random_salt` by default). Hashing ensures that the original data cannot be reconstructed.
+
+2. Anonymization Logic:
+   - Reads the CSV file in chunks to reduce memory usage.
+   - For each chunk:
+     - Applies the `anonymize` function to sensitive columns (`first_name`, `last_name`, `address`).
+     - Buffers the processed rows in memory.
+   - Writes the anonymized rows to a new CSV file once the buffer size reaches `chunk_size` (100,000 rows).
+
+3. Why Chunking?
+   - Prevents excessive memory usage when processing large files.
+
+---
+
+# Distributed Processing with Spark:
+
+1. Spark Initialization:
+   - A `SparkSession` is created with memory allocation configured (`4g` for both executor and driver).
+
+2. Read the CSV File:
+   - Loads the input CSV into a Spark DataFrame using `spark.read.csv`.
+
+3. Column Anonymization:
+   - Uses Spark's built-in functions (`sha2` for hashing) to anonymize columns.
+   - Columns (`first_name`, `last_name`, `address`) are hashed with a salt using:
+     ```python
+     sha2(concat_ws("", column_name, lit(salt)), 256)
+     ```
+   - `concat_ws` concatenates the column value with the salt, and `sha2` hashes the result.
+
+4. Write Anonymized Data:
+   - The anonymized DataFrame is written to a new CSV file in distributed fashion.
+
+5. When to Use Spark:
+   - Suitable for large files (>1GB) or datasets requiring distributed processing for efficiency.
+
+---
+
+ 3. File Size Determination
+
+The `get_file_size` function checks the size of the file to determine the appropriate anonymization method:
+- If the file size is ≤1GB, local processing is used.
+- If the file size is >1GB, Spark is used for distributed processing.
+
+---
+
+ 4. Main Program Logic
+
+1. Generate Dataset:
+   - A CSV file (`sample_data.csv`) with 1,000,000 rows is created (~2GB size for this example).
+
+2. Determine File Size:
+   - The size of the file is calculated in GB using `os.path.getsize`.
+
+3. Anonymization Method:
+   - Files ≤1GB: Process locally using `anonymize_csv_locally`.
+   - Files >1GB: Use Spark's distributed processing with `anonymize_csv_with_spark`.
+
+4. Anonymized Output:
+   - Local anonymized file: `anonymized_data_local.csv`.
+   - Spark anonymized file: `anonymized_data_spark.csv`.
+
+---
+
+ Key Concepts Demonstrated
+
+# Data Generation
+- Scalability: Generates a realistic dataset of arbitrary size.
+- Reusability: Can adjust columns and row count to simulate different datasets.
+
+# Anonymization Techniques
+1. Hashing with Salt:
+   - Secure way to mask sensitive data.
+   - Ensures repeatability while protecting the original values.
+
+2. Local vs. Distributed Processing:
+   - Efficient chunk-based processing for smaller files.
+   - Scalable distributed processing with Spark for larger datasets.
+
+# File Handling
+- Efficient use of resources via chunking and Spark's distributed framework.
+- Compatibility with large datasets without overwhelming memory.
+
+---
