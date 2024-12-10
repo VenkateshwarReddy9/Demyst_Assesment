@@ -1,0 +1,45 @@
+import unittest
+import csv
+import os
+from anonymization_script import anonymize, get_file_size, anonymize_csv_locally
+
+class TestAnonymizer(unittest.TestCase):
+    def setUp(self):
+        """Set up a sample CSV file for testing."""
+        self.input_file = "test_sample.csv"
+        self.output_file = "test_anonymized.csv"
+        with open(self.input_file, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["first_name", "last_name", "address", "date_of_birth"])
+            writer.writerow(["John", "Doe", "123 Elm St", "1980-01-01"])
+
+    def tearDown(self):
+        """Clean up test files."""
+        if os.path.exists(self.input_file):
+            os.remove(self.input_file)
+        if os.path.exists(self.output_file):
+            os.remove(self.output_file)
+
+    def test_anonymize(self):
+        """Test the anonymize function."""
+        original = "test_value"
+        hashed = anonymize(original)
+        self.assertNotEqual(original, hashed)
+        self.assertEqual(len(hashed), 64)
+
+    def test_get_file_size(self):
+        """Test the get_file_size function."""
+        size = get_file_size(self.input_file)
+        self.assertGreater(size, 0)
+
+    def test_anonymize_csv_locally(self):
+        """Test the local anonymization of a CSV file."""
+        anonymize_csv_locally(self.input_file, self.output_file, chunk_size=1)
+        self.assertTrue(os.path.exists(self.output_file))
+        with open(self.output_file, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+            self.assertNotEqual(rows[0]["first_name"], "John")
+
+if __name__ == "__main__":
+    unittest.main()
